@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>TypeScript HTML App</title>
+    <link rel="stylesheet" href="app.css" type="text/css" />
+    <script src="Scripts/jquery-1.11.0.js"></script>
+    <script src="Scripts/app.js"></script>
+</head>
+<body>
+    <h1>SQL Server Web Client</h1>
+    server: <input type="text" id="txtServer" /><br />
+    database name: <input type="text" id="txtDatabaseName" /><br />
+    user id: <input type="text" id="txtUserId" /><br />
+    password: <input type="text" id="txtPassword" /> <input type="button" value="Connect" id="cmdConnect" /><br />
+    connection state: <input type="text" value="" id="txtConnectionState" /><br />
+    connection guid: <input type="text" value="" id="txtConnectionGuid" class="wideinput" /><br />
+    connection message: <input type="text" value="" id="txtConnectionMessage" /><br />
+    <textarea id="txtSqlCommand" rows="30" cols="85"></textarea><br />
+    <input type="button" value="Run" id="cmdRun" /><br />
+    <div id="results"></div>
+</body>
+</html>

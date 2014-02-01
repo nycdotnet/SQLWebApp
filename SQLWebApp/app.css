@@ -1,0 +1,25 @@
+﻿body {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+span {
+    font-style: italic;
+}
+
+.wideinput {
+    width: 300px;
+}
+
+#results table {
+    border-collapse:collapse;
+}
+
+#results td {
+    border: 1px solid;
+    border-color: darkgray;
+}
+
+.columnHeader {
+    font-weight: bold;
+    background-color: #c5ffc5
+}
