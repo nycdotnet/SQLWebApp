@@ -31,39 +31,63 @@ var runCommand = function () {
 };
 
 function renderAllResultSets(resultSet) {
-    $("#results").empty();
+    document.getElementById("results").innerHTML = "";
     for (var resultSetIndex = 0; resultSetIndex < resultSet.results.length; resultSetIndex++) {
-        renderResultSet(resultSet.results[resultSetIndex]);
+        renderResultSetAsString(resultSet.results[resultSetIndex]);
     }
 }
 
-function renderResultSet(result) {
-    //todo: refactor without jQuery
-    var r = $("#results");
-    r.append("<hr>").append($("<span></span>").text("Rows affected: " + result.rowsAffected.toString()));
+function renderResultSetAsString(result) {
+    var sb = new StringBuilder("<hr><span>");
+    sb.appendEscaped("Rows affected: " + result.rowsAffected.toString());
+    sb.append("</span><table><tbody>");
 
-    var table = $("<table></table>");
-    table.append(buildTableRow(result.columns, "columnHeader"));
+    var columnHeaderDefaults = new TableRowRenderOptions();
+    columnHeaderDefaults.cssClasses = "columnHeader";
+    columnHeaderDefaults.SubstituteColumnIndexOnBlankFields = true;
 
-    for (var rowIndex = 0; rowIndex < result.rows.length; rowIndex++) {
-        table.append(buildTableRow(result.rows[rowIndex]));
+    buildTableRowToStringBuilder(sb, result.columns, columnHeaderDefaults);
+    var length = result.rows.length;
+    var rows = result.rows;
+
+    for (var rowIndex = 0; rowIndex < length; rowIndex++) {
+        buildTableRowToStringBuilder(sb, rows[rowIndex]);
     }
+    sb.append("</tbody></table>");
 
-    r.append(table);
+    var r = document.getElementById("results");
+    var div = document.createElement("div");
+
+    div.innerHTML = sb.toString();
+
+    r.appendChild(div);
 }
 
-function buildTableRow(rowData, cssClasses) {
-    //todo: refactor without jQuery
+function buildTableRowToStringBuilder(sb, rowData, defaults) {
+    if (!defaults) {
+        defaults = new TableRowRenderOptions();
+    }
     var colCount = rowData.length;
-    var tableRow = $("<tr></tr>");
+    sb.append("<tr>");
     for (var colIndex = 0; colIndex < colCount; colIndex++) {
-        tableRow.append($("<td></td>").text(rowData[colIndex] ? rowData[colIndex] : "Column" + colIndex.toString()));
+        sb.append("<td");
+        if (defaults.cssClasses.length > 0) {
+            sb.appendEscaped(' class="' + defaults.cssClasses + '"');
+        }
+        sb.append(">");
+        sb.appendEscaped(rowData[colIndex] ? rowData[colIndex] : (defaults.SubstituteColumnIndexOnBlankFields ? "Column" + colIndex.toString() : ""));
+        sb.append("</td>");
     }
-    if (cssClasses) {
-        tableRow.addClass(cssClasses);
-    }
-    return tableRow;
+    sb.append("</tr>");
 }
+
+var TableRowRenderOptions = (function () {
+    function TableRowRenderOptions() {
+        this.SubstituteColumnIndexOnBlankFields = false;
+        this.cssClasses = "";
+    }
+    return TableRowRenderOptions;
+})();
 
 var WebSqlCommandRequest = (function () {
     function WebSqlCommandRequest(connectionGuid, commandText) {
@@ -162,5 +186,45 @@ var WebSqlCommandResultSet = (function () {
         this.results = resultSet.results;
     }
     return WebSqlCommandResultSet;
+})();
+
+var StringBuilder = (function () {
+    function StringBuilder(value) {
+        //StringBuilder code converted to TypeScript using code from http://www.codeproject.com/Articles/12375/JavaScript-StringBuilder
+        this.escape = null;
+        this.strings = [];
+        if (value) {
+            this.append(value);
+        }
+        if (document) {
+            this.escape = document.createElement('textarea');
+        }
+    }
+    StringBuilder.prototype.append = function (value) {
+        if (value) {
+            this.strings.push(value);
+        }
+    };
+
+    // appendEscaped idea thanks to http://stackoverflow.com/users/552067/web-designer
+    // http://stackoverflow.com/questions/5499078/fastest-method-to-escape-html-tags-as-html-entities
+    StringBuilder.prototype.appendEscaped = function (value) {
+        if (value) {
+            this.strings.push(this.escapeHTML(value));
+        }
+    };
+
+    StringBuilder.prototype.clear = function () {
+        this.strings.length = 1;
+    };
+    StringBuilder.prototype.toString = function () {
+        return this.strings.join("");
+    };
+
+    StringBuilder.prototype.escapeHTML = function (html) {
+        this.escape.innerHTML = html;
+        return this.escape.innerHTML;
+    };
+    return StringBuilder;
 })();
 //# sourceMappingURL=app.js.map

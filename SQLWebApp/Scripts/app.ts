@@ -35,41 +35,61 @@ var runCommand = () => {
 
 
 function renderAllResultSets(resultSet: WebSqlCommandResultSet) {
-    $("#results").empty();
+    document.getElementById("results").innerHTML = "";
     for (var resultSetIndex = 0; resultSetIndex < resultSet.results.length; resultSetIndex++) {
-        renderResultSet(resultSet.results[resultSetIndex]);
+        renderResultSetAsString(resultSet.results[resultSetIndex]);
     }
 }
 
-function renderResultSet(result: IWebSqlCommandResult) {
-    //todo: refactor without jQuery
-    var r = $("#results");
-    r.append("<hr>").append($("<span></span>").text("Rows affected: " + result.rowsAffected.toString()));
+function renderResultSetAsString(result: IWebSqlCommandResult) {
+    var sb = new StringBuilder("<hr><span>");
+    sb.appendEscaped("Rows affected: " + result.rowsAffected.toString());
+    sb.append("</span><table><tbody>");
 
-    var table = $("<table></table>");
-    table.append(buildTableRow(result.columns, "columnHeader"));
+    var columnHeaderDefaults = new TableRowRenderOptions();
+    columnHeaderDefaults.cssClasses = "columnHeader";
+    columnHeaderDefaults.SubstituteColumnIndexOnBlankFields = true;
 
-    for (var rowIndex = 0; rowIndex < result.rows.length; rowIndex++) {
-        table.append(buildTableRow(result.rows[rowIndex]));
+    buildTableRowToStringBuilder(sb, result.columns, columnHeaderDefaults);
+    var length = result.rows.length;
+    var rows = result.rows;
+
+    for (var rowIndex = 0; rowIndex < length; rowIndex++) {
+        buildTableRowToStringBuilder(sb,rows[rowIndex]);
     }
+    sb.append("</tbody></table>");
 
-    r.append(table);
+    var r = document.getElementById("results");
+    var div = document.createElement("div");
+    
+    div.innerHTML = sb.toString();
+
+    r.appendChild(div);
 }
 
-function buildTableRow(rowData: string[], cssClasses?: string): JQuery {
-    //todo: refactor without jQuery
+
+function buildTableRowToStringBuilder(sb: StringBuilder, rowData: string[], defaults?: TableRowRenderOptions): void {
+    if (!defaults) {
+        defaults = new TableRowRenderOptions();
+    }
     var colCount = rowData.length;
-    var tableRow = $("<tr></tr>");
+    sb.append("<tr>");
     for (var colIndex = 0; colIndex < colCount; colIndex++) {
-        tableRow.append($("<td></td>").text(rowData[colIndex] ? rowData[colIndex] : "Column" + colIndex.toString() ));
+        sb.append("<td");
+        if (defaults.cssClasses.length > 0) {
+            sb.appendEscaped(' class="' + defaults.cssClasses + '"');
+        }
+        sb.append(">");
+        sb.appendEscaped(rowData[colIndex] ? rowData[colIndex] : (defaults.SubstituteColumnIndexOnBlankFields ? "Column" + colIndex.toString() : ""));
+        sb.append("</td>");
     }
-    if (cssClasses) {
-        tableRow.addClass(cssClasses);
-    }
-    return tableRow;
+    sb.append("</tr>");
 }
 
-
+class TableRowRenderOptions {
+    public SubstituteColumnIndexOnBlankFields: boolean = false;
+    public cssClasses: string = "";
+}
 
 
 class WebSqlCommandRequest {
@@ -180,5 +200,48 @@ class WebSqlCommandResultSet {
     public results: IWebSqlCommandResult[]
     constructor(resultSet: IWebSqlCommandResultSet) {
         this.results = resultSet.results;
+    }
+}
+
+
+class StringBuilder {
+    //StringBuilder code converted to TypeScript using code from http://www.codeproject.com/Articles/12375/JavaScript-StringBuilder
+
+    private escape: HTMLTextAreaElement = null;    
+    public strings: string[] = [];
+
+    constructor(value?: string) {
+        if (value) {
+            this.append(value);
+        }
+        if (document) {
+            this.escape = document.createElement('textarea');
+        }
+    }
+
+    public append(value: string): void {
+        if (value) {
+            this.strings.push(value);
+        }
+    }
+
+    // appendEscaped idea thanks to http://stackoverflow.com/users/552067/web-designer
+    // http://stackoverflow.com/questions/5499078/fastest-method-to-escape-html-tags-as-html-entities
+    public appendEscaped(value: string) : void {
+        if (value) {
+            this.strings.push(this.escapeHTML(value));
+        }
+    }
+
+    public clear(): void {
+        this.strings.length = 1;
+    }
+    public toString() : string {
+        return this.strings.join("");
+    }
+
+    public escapeHTML(html: string): string {
+        this.escape.innerHTML = html;
+        return this.escape.innerHTML;
     }
 }
