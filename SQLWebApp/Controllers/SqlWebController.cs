@@ -38,22 +38,18 @@ namespace SQLWebApp.Controllers
                     } while (reader.NextResult());
                     reader.Close();
                 }
-                resultSet.state = connection.state;
-
-                return resultSet;
             }
             catch (Exception ex)
             {
                 if (resultSet == null)
                 {
                     resultSet = new WebSqlCommandResultSet(connection);
+                    
                 }
-                resultSet.state = connection.state;
-                //todo pass the error back correctly
-                return resultSet;
+                resultSet.Append(ex);
             }
-
-            
+            resultSet.state = connection.state;
+            return resultSet;
         }
 
         private Dictionary<Guid, WebSqlConnection> getConnections()

@@ -23,5 +23,12 @@ namespace SQLWebApp.Models
             var result = new WebSqlCommandResult(reader);
             results.Add(result);
         }
+
+        internal void Append(Exception ex)
+        {
+            var result = new WebSqlCommandResult(ex);
+            results.Add(result);
+
+        }
     }
 }

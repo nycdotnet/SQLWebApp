@@ -23,3 +23,7 @@ span {
     font-weight: bold;
     background-color: #c5ffc5
 }
+
+.SqlError {
+    color: red;
+}

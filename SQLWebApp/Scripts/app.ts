@@ -29,19 +29,39 @@ var runCommand = () => {
     var commandRequest = new WebSqlCommandRequest($("#txtConnectionGuid").val(), $("#txtSqlCommand").val());
     commandRequest.Execute(() => {
         var r = commandRequest.CommandResultSet;
-        renderAllResultSets(r);
+        renderResultSet(r);
     });
 };
 
 
-function renderAllResultSets(resultSet: WebSqlCommandResultSet) {
+function renderResultSet(resultSet: WebSqlCommandResultSet) {
     document.getElementById("results").innerHTML = "";
     for (var resultSetIndex = 0; resultSetIndex < resultSet.results.length; resultSetIndex++) {
-        renderResultSetAsString(resultSet.results[resultSetIndex]);
+        var currentResult = resultSet.results[resultSetIndex];
+        if (currentResult.columns && currentResult.rows) {
+            renderResultAsString(currentResult);
+        } else {
+            renderErrorResultAsString(currentResult);
+        }
+        
     }
 }
 
-function renderResultSetAsString(result: IWebSqlCommandResult) {
+function renderErrorResultAsString(result: IWebSqlCommandResult) {
+    var sb = new StringBuilder('<hr><span class="SqlError">');
+    sb.appendEscaped("Error " + result.errorCode.toString() +
+            " on line " + result.errorLineNumber.toString() + ": " + result.errorMessage);
+    sb.append("</span>");
+
+    var r = document.getElementById("results");
+    var div = document.createElement("div");
+    div.innerHTML = sb.toString();
+    r.appendChild(div);
+}
+
+
+
+function renderResultAsString(result: IWebSqlCommandResult) {
     var sb = new StringBuilder("<hr><span>");
     sb.appendEscaped("Rows affected: " + result.rowsAffected.toString());
     sb.append("</span><table><tbody>");
@@ -69,6 +89,9 @@ function renderResultSetAsString(result: IWebSqlCommandResult) {
 
 
 function buildTableRowToStringBuilder(sb: StringBuilder, rowData: string[], defaults?: TableRowRenderOptions): void {
+    if (!rowData || !rowData.length) {
+        return;
+    }
     if (!defaults) {
         defaults = new TableRowRenderOptions();
     }
@@ -183,6 +206,9 @@ interface IWebSqlCommandResult {
     columns: string[];
     rows: string[][];
     rowsAffected: number;
+    errorLineNumber: number;
+    errorCode: number;
+    errorMessage: string;
 }
 
 

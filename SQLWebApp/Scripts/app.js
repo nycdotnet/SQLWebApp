@@ -26,18 +26,34 @@ var runCommand = function () {
     var commandRequest = new WebSqlCommandRequest($("#txtConnectionGuid").val(), $("#txtSqlCommand").val());
     commandRequest.Execute(function () {
         var r = commandRequest.CommandResultSet;
-        renderAllResultSets(r);
+        renderResultSet(r);
     });
 };
 
-function renderAllResultSets(resultSet) {
+function renderResultSet(resultSet) {
     document.getElementById("results").innerHTML = "";
     for (var resultSetIndex = 0; resultSetIndex < resultSet.results.length; resultSetIndex++) {
-        renderResultSetAsString(resultSet.results[resultSetIndex]);
+        var currentResult = resultSet.results[resultSetIndex];
+        if (currentResult.columns && currentResult.rows) {
+            renderResultAsString(currentResult);
+        } else {
+            renderErrorResultAsString(currentResult);
+        }
     }
 }
 
-function renderResultSetAsString(result) {
+function renderErrorResultAsString(result) {
+    var sb = new StringBuilder('<hr><span class="SqlError">');
+    sb.appendEscaped("Error " + result.errorCode.toString() + " on line " + result.errorLineNumber.toString() + ": " + result.errorMessage);
+    sb.append("</span>");
+
+    var r = document.getElementById("results");
+    var div = document.createElement("div");
+    div.innerHTML = sb.toString();
+    r.appendChild(div);
+}
+
+function renderResultAsString(result) {
     var sb = new StringBuilder("<hr><span>");
     sb.appendEscaped("Rows affected: " + result.rowsAffected.toString());
     sb.append("</span><table><tbody>");
@@ -64,6 +80,9 @@ function renderResultSetAsString(result) {
 }
 
 function buildTableRowToStringBuilder(sb, rowData, defaults) {
+    if (!rowData || !rowData.length) {
+        return;
+    }
     if (!defaults) {
         defaults = new TableRowRenderOptions();
     }
