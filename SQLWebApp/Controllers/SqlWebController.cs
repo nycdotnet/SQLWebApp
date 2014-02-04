@@ -17,8 +17,9 @@ namespace SQLWebApp.Controllers
         {
             var conn = new WebSqlConnection(input.serverName, input.databaseName, input.userId, input.password, 10);
             var connections = getConnections();
+            var result = conn.connect();
             connections.Add(conn.guid, conn);
-            return conn.connect();
+            return result;
         }
 
         [HttpPost]

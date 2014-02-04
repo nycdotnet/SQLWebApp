@@ -8,7 +8,22 @@ namespace SQLWebApp.Models
 {
     public class WebSqlConnection
     {
-        public Guid guid { get; set; }
+        
+        public Guid guid {
+            get
+            {
+                return connection.ClientConnectionId;
+            }
+        }
+        
+        public string state
+        {
+            get
+            {
+                return this.connection.State.ToString();
+            }
+        }
+
         public SqlConnection connection { get; set; }
 
         public WebSqlConnection(string serverName, string databaseName, string userId, string password, int connectTimeoutInSeconds)
@@ -31,20 +46,12 @@ namespace SQLWebApp.Models
         }
 
         private void newFromConnectionString(string connectionString) {
-            this.guid = Guid.NewGuid();
             this.connection = new SqlConnection(connectionString);
-        }
-
-        public string state {
-            get {
-                return this.connection.State.ToString();
-            }
         }
 
         public WebSqlConnectResult connect()
         {
             WebSqlConnectResult result = new WebSqlConnectResult();
-            result.connectionGuid = this.guid.ToString();
             if (this.connection.State == System.Data.ConnectionState.Open)
             {
                 result.message = "A connect request is not required for an already-open connection.";
@@ -60,6 +67,7 @@ namespace SQLWebApp.Models
                     result.message = ex.Message;
                 }
             }
+            result.connectionGuid = this.guid.ToString();
             result.state = this.state;
             return result;
         }

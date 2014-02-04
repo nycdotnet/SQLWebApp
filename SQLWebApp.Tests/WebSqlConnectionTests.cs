@@ -15,7 +15,7 @@ namespace SQLWebApp.Tests
         {
             var conn = new WebSqlConnection(@"localhost\sqlexpress","junk","","",5);
             Assert.AreEqual(36, conn.guid.ToString().Length, "expect appropriate GUID length.");
-            Assert.AreNotEqual(ZeroGuid, conn.guid.ToString(),"expect non-zero GUID.");
+            Assert.AreEqual(ZeroGuid, conn.guid.ToString(),"expect zero GUID.");
             Assert.AreEqual(@"localhost\sqlexpress", conn.connection.DataSource, "expect correct server name");
             Assert.AreEqual("junk", conn.connection.Database, "expect correct database name");
         }
@@ -39,7 +39,7 @@ namespace SQLWebApp.Tests
             var connResult = conn.connect();
             Assert.IsTrue(connResult.message.IndexOf("error") >= 0, "expect error message on failed connect");
             Assert.AreEqual("Closed", connResult.state, "expect closed connection");
-            Assert.AreNotEqual(ZeroGuid, connResult.connectionGuid.ToString(), "expect non-zero GUID");
+            Assert.AreEqual(ZeroGuid, connResult.connectionGuid.ToString(), "expect zero GUID");
         }
     }
 }
