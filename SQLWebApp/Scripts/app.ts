@@ -21,17 +21,37 @@ var connectToDatabase = () => {
         } else {
             alert("failed to connect to DB.  Check console.log for details.");
         }
-
-        
     });
 }; 
+
 var runCommand = () => {
-    var commandRequest = new WebSqlCommandRequest($("#txtConnectionGuid").val(), $("#txtSqlCommand").val());
+    var commandRequest = new WebSqlCommandRequest($("#txtConnectionGuid").val(), getSelectedText());
+    if (commandRequest.commandText === "") {
+        return;
+    }
     commandRequest.Execute(() => {
         var r = commandRequest.CommandResultSet;
         renderResultSet(r);
     });
 };
+
+function getSelectedText() : string {
+    var selectedText: string = "";
+    var textArea: HTMLTextAreaElement = <HTMLTextAreaElement>document.getElementById("txtSqlCommand");
+    if (textArea.selectionStart !== undefined && textArea.selectionEnd !== undefined ) {
+        var start: number = textArea.selectionStart, end: number = textArea.selectionEnd;
+        if (start === end) {
+            selectedText = textArea.innerHTML;
+        } else {
+            selectedText = textArea.innerHTML.substring(textArea.selectionStart, textArea.selectionEnd);
+        }
+    } else {
+        //todo: fix support for legacy browsers.
+        var result = confirm("I can't determine if you've selected anything in the query edit window on this version (or compatability mode) of the browser.  Should I run the entire query regardless of if you've selected some text?");
+        selectedText = result ? textArea.innerHTML : "";
+    }
+    return selectedText;
+}
 
 
 function renderResultSet(resultSet: WebSqlCommandResultSet) {
@@ -43,7 +63,6 @@ function renderResultSet(resultSet: WebSqlCommandResultSet) {
         } else {
             renderErrorResultAsString(currentResult);
         }
-        
     }
 }
 
@@ -202,6 +221,7 @@ class WebSqlConnectRequest {
 interface IWebSqlCommandResultSet {
     results: IWebSqlCommandResult[];
 }
+
 interface IWebSqlCommandResult {
     columns: string[];
     rows: string[][];
@@ -210,7 +230,6 @@ interface IWebSqlCommandResult {
     errorCode: number;
     errorMessage: string;
 }
-
 
 interface IWebSqlConnectResult {
     connectionGuid: string;
@@ -228,7 +247,6 @@ class WebSqlCommandResultSet {
         this.results = resultSet.results;
     }
 }
-
 
 class StringBuilder {
     //StringBuilder code converted to TypeScript using code from http://www.codeproject.com/Articles/12375/JavaScript-StringBuilder
@@ -262,7 +280,8 @@ class StringBuilder {
     public clear(): void {
         this.strings.length = 1;
     }
-    public toString() : string {
+
+    public toString(): string {
         return this.strings.join("");
     }
 

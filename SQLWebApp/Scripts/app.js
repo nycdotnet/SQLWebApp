@@ -22,13 +22,35 @@ var connectToDatabase = function () {
         }
     });
 };
+
 var runCommand = function () {
-    var commandRequest = new WebSqlCommandRequest($("#txtConnectionGuid").val(), $("#txtSqlCommand").val());
+    var commandRequest = new WebSqlCommandRequest($("#txtConnectionGuid").val(), getSelectedText());
+    if (commandRequest.commandText === "") {
+        return;
+    }
     commandRequest.Execute(function () {
         var r = commandRequest.CommandResultSet;
         renderResultSet(r);
     });
 };
+
+function getSelectedText() {
+    var selectedText = "";
+    var textArea = document.getElementById("txtSqlCommand");
+    if (textArea.selectionStart !== undefined && textArea.selectionEnd !== undefined) {
+        var start = textArea.selectionStart, end = textArea.selectionEnd;
+        if (start === end) {
+            selectedText = textArea.innerHTML;
+        } else {
+            selectedText = textArea.innerHTML.substring(textArea.selectionStart, textArea.selectionEnd);
+        }
+    } else {
+        //todo: fix support for legacy browsers.
+        var result = confirm("I can't determine if you've selected anything in the query edit window on this version (or compatability mode) of the browser.  Should I run the entire query regardless of if you've selected some text?");
+        selectedText = result ? textArea.innerHTML : "";
+    }
+    return selectedText;
+}
 
 function renderResultSet(resultSet) {
     document.getElementById("results").innerHTML = "";
@@ -236,6 +258,7 @@ var StringBuilder = (function () {
     StringBuilder.prototype.clear = function () {
         this.strings.length = 1;
     };
+
     StringBuilder.prototype.toString = function () {
         return this.strings.join("");
     };
