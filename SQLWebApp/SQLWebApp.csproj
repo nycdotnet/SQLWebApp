@@ -111,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\app.ts" />
+    <TypeScriptCompile Include="Scripts\WebSqlClient.ts" />
   </ItemGroup>
   <ItemGroup>
     <CodeAnalysisDictionary Include="Typings\jquery.d.ts" />

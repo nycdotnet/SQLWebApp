@@ -1,6 +1,8 @@
 /// <reference path="../typings/jquery.d.ts" />
 "use strict";
 
+import WebSqlClient = require("WebSqlClient"); 
+
 $(document).ready(() => {
     $("#txtServer").val("localhost\\sqlexpress");
     $("#txtDatabaseName").val("junk");
@@ -11,7 +13,7 @@ $(document).ready(() => {
 });
 
 var connectToDatabase = () => {
-    var connectRequest = new WebSqlConnectRequest($("#txtServer").val(), $("#txtDatabaseName").val(), $("#txtUserId").val(), $("#txtPassword").val());
+    var connectRequest = new WebSqlClient.WebSqlConnectRequest($("#txtServer").val(), $("#txtDatabaseName").val(), $("#txtUserId").val(), $("#txtPassword").val());
     connectRequest.Connect(() => {
         var r = connectRequest.ConnectResult;
         if (r && r.state) {
@@ -25,7 +27,7 @@ var connectToDatabase = () => {
 }; 
 
 var runCommand = () => {
-    var commandRequest = new WebSqlCommandRequest($("#txtConnectionGuid").val(), getSelectedText());
+    var commandRequest = new WebSqlClient.WebSqlCommandRequest($("#txtConnectionGuid").val(), getSelectedText());
     if (commandRequest.commandText === "") {
         return;
     }
@@ -54,7 +56,7 @@ function getSelectedText() : string {
 }
 
 
-function renderResultSet(resultSet: WebSqlCommandResultSet) {
+function renderResultSet(resultSet: WebSqlClient.WebSqlCommandResultSet) {
     document.getElementById("results").innerHTML = "";
     for (var resultSetIndex = 0; resultSetIndex < resultSet.results.length; resultSetIndex++) {
         var currentResult = resultSet.results[resultSetIndex];
@@ -66,7 +68,7 @@ function renderResultSet(resultSet: WebSqlCommandResultSet) {
     }
 }
 
-function renderErrorResultAsString(result: IWebSqlCommandResult) {
+function renderErrorResultAsString(result: WebSqlClient.IWebSqlCommandResult) {
     var sb = new StringBuilder('<hr><span class="SqlError">');
     sb.appendEscaped("Error " + result.errorCode.toString() +
             " on line " + result.errorLineNumber.toString() + ": " + result.errorMessage);
@@ -80,7 +82,7 @@ function renderErrorResultAsString(result: IWebSqlCommandResult) {
 
 
 
-function renderResultAsString(result: IWebSqlCommandResult) {
+function renderResultAsString(result: WebSqlClient.IWebSqlCommandResult) {
     var sb = new StringBuilder("<hr><span>");
     sb.appendEscaped("Rows affected: " + result.rowsAffected.toString());
     sb.append("</span><table><tbody>");
@@ -134,120 +136,6 @@ class TableRowRenderOptions {
 }
 
 
-class WebSqlCommandRequest {
-    private callerCallback: (resultSet? : WebSqlCommandResultSet) => any;
-    constructor(public connectionGuid: string, public commandText: string) { }
-
-    public CommandResultSet: WebSqlCommandResultSet;
-
-    public Execute(callerCallback: () => any): void {
-        var that = this;
-        this.callerCallback = callerCallback;
-        var xhr = $.ajax({
-            url: "/api/SqlWeb/Execute",
-            type: "POST",
-            dataType: 'json',
-            data: JSON.stringify(that),
-            contentType: "application/json;charset=utf-8",
-        })
-            .done((j: JQueryXHR) => { that.doDone(j); })
-            .fail((j: JQueryXHR) => { that.doFail(j); })
-            .always((j: JQueryXHR) => {
-                if (that.callerCallback) {
-                    that.callerCallback();
-                }
-            });
-    }
-
-    public doDone = (j: JQueryXHR): void => {
-        var r: IWebSqlCommandResultSet = <any>j;
-        this.CommandResultSet = new WebSqlCommandResultSet(r);
-        return;
-    }
-    public doFail = (j: JQueryXHR): void => {
-        //todo: fixup unhappy path.
-        console.log("WebSqlCommandRequest ajax fail");
-        console.log(j);
-        return;
-    }
-}
-
-
-class WebSqlConnectRequest {
-    constructor(public serverName: string, public databaseName: string, public userId: string, public password: string) { }
-
-    private callerCallback: () => any;
-    public ConnectResult: WebSqlConnectResult;
-
-    public Connect(callerCallback: () => any): void {
-        var that = this;
-        this.callerCallback = callerCallback;
-        var xhr = $.ajax({
-                url: "/api/SqlWeb/Connect",
-                type: "POST",
-                dataType: 'json',
-                data: JSON.stringify(that),
-                contentType: "application/json;charset=utf-8",
-            })
-            .done((j: JQueryXHR) => { that.doDone(j); })
-            .fail((j: JQueryXHR) => { that.doFail(j); })
-            .always((j: JQueryXHR) => {
-                if (that.callerCallback) {
-                        that.callerCallback();
-                }
-            });
-    }
-
-    public doDone = (j: JQueryXHR): void => {
-        var r: IWebSqlConnectResult = <any>j;
-        this.ConnectResult = new WebSqlConnectResult(
-            r.connectionGuid, r.state, r.message);
-        return;
-    }
-    public doFail = (j: JQueryXHR): void => {
-        //todo: fixup unhappy path.
-        console.log("WebSqlConnectRequest ajax fail");
-        console.log(j);
-        return;
-    }
-
-    public connectCallback = (data: any, textStatus: string, jqXHR: JQueryXHR) : void => {
-        this.callerCallback();
-    }
-
-}
-
-
-interface IWebSqlCommandResultSet {
-    results: IWebSqlCommandResult[];
-}
-
-interface IWebSqlCommandResult {
-    columns: string[];
-    rows: string[][];
-    rowsAffected: number;
-    errorLineNumber: number;
-    errorCode: number;
-    errorMessage: string;
-}
-
-interface IWebSqlConnectResult {
-    connectionGuid: string;
-    state: string;
-    message: string;
-}
-
-class WebSqlConnectResult implements IWebSqlConnectResult{
-    constructor(public connectionGuid: string, public state: string, public message: string) { }
-}
-
-class WebSqlCommandResultSet {
-    public results: IWebSqlCommandResult[]
-    constructor(resultSet: IWebSqlCommandResultSet) {
-        this.results = resultSet.results;
-    }
-}
-
 class StringBuilder {
     //StringBuilder code converted to TypeScript using code from http://www.codeproject.com/Articles/12375/JavaScript-StringBuilder
 
@@ -286,6 +174,9 @@ class StringBuilder {
     }
 
     public escapeHTML(html: string): string {
+        if (!this.escape) {
+            throw "StringBuilder can only escape HTML if run with a global document variable (e.g. in a browser).";
+        }
         this.escape.innerHTML = html;
         return this.escape.innerHTML;
     }
