@@ -1,6 +1,7 @@
-/// <reference path="../typings/jquery.d.ts" />
+/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/requirejs/require.d.ts" />
 "use strict";
-define(["require", "exports", "WebSqlClient"], function(require, exports, WebSqlClient) {
+define(["require", "exports", "WebSqlClient", "jquery", "StringBuilder"], function(require, exports, WebSqlClient, $, StringBuilder) {
     $(document).ready(function () {
         $("#txtServer").val("localhost\\sqlexpress");
         $("#txtDatabaseName").val("junk");
@@ -66,7 +67,7 @@ define(["require", "exports", "WebSqlClient"], function(require, exports, WebSql
     }
 
     function renderErrorResultAsString(result) {
-        var sb = new StringBuilder('<hr><span class="SqlError">');
+        var sb = new StringBuilder.StringBuilder('<hr><span class="SqlError">');
         sb.appendEscaped("Error " + result.errorCode.toString() + " on line " + result.errorLineNumber.toString() + ": " + result.errorMessage);
         sb.append("</span>");
 
@@ -77,7 +78,7 @@ define(["require", "exports", "WebSqlClient"], function(require, exports, WebSql
     }
 
     function renderResultAsString(result) {
-        var sb = new StringBuilder("<hr><span>");
+        var sb = new StringBuilder.StringBuilder("<hr><span>");
         sb.appendEscaped("Rows affected: " + result.rowsAffected.toString());
         sb.append("</span><table><tbody>");
 
@@ -129,50 +130,6 @@ define(["require", "exports", "WebSqlClient"], function(require, exports, WebSql
             this.cssClasses = "";
         }
         return TableRowRenderOptions;
-    })();
-
-    var StringBuilder = (function () {
-        function StringBuilder(value) {
-            //StringBuilder code converted to TypeScript using code from http://www.codeproject.com/Articles/12375/JavaScript-StringBuilder
-            this.escape = null;
-            this.strings = [];
-            if (value) {
-                this.append(value);
-            }
-            if (document) {
-                this.escape = document.createElement('textarea');
-            }
-        }
-        StringBuilder.prototype.append = function (value) {
-            if (value) {
-                this.strings.push(value);
-            }
-        };
-
-        // appendEscaped idea thanks to http://stackoverflow.com/users/552067/web-designer
-        // http://stackoverflow.com/questions/5499078/fastest-method-to-escape-html-tags-as-html-entities
-        StringBuilder.prototype.appendEscaped = function (value) {
-            if (value) {
-                this.strings.push(this.escapeHTML(value));
-            }
-        };
-
-        StringBuilder.prototype.clear = function () {
-            this.strings.length = 1;
-        };
-
-        StringBuilder.prototype.toString = function () {
-            return this.strings.join("");
-        };
-
-        StringBuilder.prototype.escapeHTML = function (html) {
-            if (!this.escape) {
-                throw "StringBuilder can only escape HTML if run with a global document variable (e.g. in a browser).";
-            }
-            this.escape.innerHTML = html;
-            return this.escape.innerHTML;
-        };
-        return StringBuilder;
     })();
 });
 //# sourceMappingURL=app.js.map

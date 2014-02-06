@@ -78,6 +78,8 @@
     <Content Include="default.htm" />
     <Content Include="Global.asax" />
     <Content Include="Scripts\jquery-1.11.0.js" />
+    <Content Include="Scripts\r.js" />
+    <Content Include="Scripts\require.js" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -111,10 +113,11 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\app.ts" />
+    <TypeScriptCompile Include="Scripts\AppConfig.ts" />
+    <TypeScriptCompile Include="Scripts\StringBuilder.ts" />
+    <TypeScriptCompile Include="Scripts\typings\jquery\jquery.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\requirejs\require.d.ts" />
     <TypeScriptCompile Include="Scripts\WebSqlClient.ts" />
-  </ItemGroup>
-  <ItemGroup>
-    <CodeAnalysisDictionary Include="Typings\jquery.d.ts" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
